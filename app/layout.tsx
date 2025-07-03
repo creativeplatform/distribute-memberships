@@ -42,7 +42,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-background">
+      <body className="bg-background relative overflow-hidden">
+        {/* Video Background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="fixed top-0 left-0 w-full h-full object-cover z-[-1]"
+          aria-hidden="true"
+        >
+          <source src="/BG_video.mp4" type="video/mp4" />
+        </video>
         <Providers>{children}</Providers>
       </body>
     </html>
