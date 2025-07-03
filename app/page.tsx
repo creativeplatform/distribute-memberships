@@ -23,6 +23,7 @@ import { Button } from "./components/DemoComponents";
 import { Icon } from "./components/DemoComponents";
 import { Home } from "./components/DemoComponents";
 import { Features } from "./components/DemoComponents";
+import { Fund } from "./components/Funds";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -98,6 +99,7 @@ export default function App() {
         <main className="flex-1">
           {activeTab === "home" && <Home setActiveTab={setActiveTab} />}
           {activeTab === "features" && <Features setActiveTab={setActiveTab} />}
+          {activeTab === "fund" && <Fund setActiveTab={setActiveTab} />}
         </main>
 
         <footer className="mt-2 pt-4 flex justify-center">
@@ -105,9 +107,10 @@ export default function App() {
             variant="ghost"
             size="sm"
             className="text-[var(--ock-text-foreground-muted)] text-xs"
-            onClick={() => openUrl("https://base.org/builders/minikit")}
+            onClick={() => openUrl("https://creativeplatform.xyz")}
           >
-            Built on Base with MiniKit
+            © {new Date().getFullYear()} Creative Organization DAO. All rights
+            reserved.
           </Button>
         </footer>
       </div>
