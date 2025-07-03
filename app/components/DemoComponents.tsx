@@ -10,6 +10,7 @@ import {
   TransactionStatus,
 } from "@coinbase/onchainkit/transaction";
 import unlockAbiJson from "../../lib/abis/Unlock.json";
+import Image from "next/image";
 
 type ButtonProps = {
   children: ReactNode;
@@ -299,7 +300,7 @@ export function Home({ setActiveTab }: HomeProps) {
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
 
-  // Fetch USDC balance when modal opens or selected membership changes
+  // Fetch USDC balance when wallet is connected
   useEffect(() => {
     async function fetchUSDCBalance() {
       if (!address || !publicClient) return;
@@ -317,10 +318,10 @@ export function Home({ setActiveTab }: HomeProps) {
       }
       setBalanceLoading(false);
     }
-    if (showModal && selected && address && publicClient) {
+    if (address && publicClient) {
       fetchUSDCBalance();
     }
-  }, [showModal, selected, address, publicClient]);
+  }, [address, publicClient]);
 
   async function checkAllowance(membership: (typeof MEMBERSHIPS)[0]) {
     if (!address || !membership || !publicClient) return;
@@ -450,6 +451,37 @@ export function Home({ setActiveTab }: HomeProps) {
       </Card>
 
       <Card title="Choose Your Membership">
+        {address && (
+          <div className="flex items-center gap-3 mb-4">
+            {/* USDC Icon */}
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#2775CA]/10 border border-[#2775CA]/20">
+              <Image
+                src="/usd-coin-usdc-logo.svg"
+                alt="USDC"
+                width={24}
+                height={24}
+                className="w-6 h-6"
+              />
+            </span>
+            <div>
+              <div className="text-xs text-[var(--app-foreground-muted)] font-medium">
+                USDC Balance
+              </div>
+              <div className="text-lg font-bold text-[#2775CA]">
+                {balanceLoading ? (
+                  <span className="animate-pulse">...</span>
+                ) : (
+                  <>
+                    {formatUnits(usdcBalance, 6)}{" "}
+                    <span className="text-xs font-normal text-[var(--app-foreground-muted)]">
+                      USDC
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         <p className="text-[var(--app-foreground-muted)] mb-4">
           {!address
             ? "Connect your wallet to select a membership:"
