@@ -18,6 +18,8 @@ function generateJWT() {
 }
 
 export async function POST(request: Request) {
+  console.log("Request received");
+
   // Parse the request body
   let address: string | undefined;
   let assets: string[] | undefined;
@@ -32,6 +34,8 @@ export async function POST(request: Request) {
     );
   }
 
+  console.log("Parsed body:", { address, assets });
+
   if (!address || !Array.isArray(assets) || assets.length === 0) {
     return NextResponse.json(
       { error: "Missing address or assets" },
@@ -40,6 +44,8 @@ export async function POST(request: Request) {
   }
 
   const jwtToken = generateJWT();
+
+  console.log("JWT generated");
 
   // Call Coinbase Onramp Session Token API
   const response = await fetch(
@@ -62,12 +68,17 @@ export async function POST(request: Request) {
     },
   );
 
+  console.log("Coinbase API response status:", response.status);
+
   if (!response.ok) {
     const error = await response.text();
     return NextResponse.json({ error }, { status: 500 });
   }
 
   const data = await response.json();
+
+  console.log("Coinbase API response data:", data);
+
   const sessionToken = data?.data?.token;
 
   if (!sessionToken) {

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 import { Button, Card } from "./DemoComponents";
 import { FundCard } from "@coinbase/onchainkit/fund";
 // NOTE: To integrate Divvi referral, import getDataSuffix, submitReferral from '@divvi/referral-sdk' and useChainId from 'wagmi' when adding a custom transaction. See integration plan for details.
@@ -11,12 +12,20 @@ type FundProps = {
 export function Fund({ setActiveTab }: FundProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { address } = useAccount();
 
   useEffect(() => {
     async function fetchSessionToken() {
       setLoading(true);
       try {
-        const res = await fetch("/api/onramp-session", { method: "POST" });
+        const res = await fetch("/api/onramp-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            address,
+            assets: ["USDC"],
+          }),
+        });
         const data = await res.json();
         setSessionToken(data.sessionToken);
       } catch {
@@ -24,8 +33,8 @@ export function Fund({ setActiveTab }: FundProps) {
       }
       setLoading(false);
     }
-    fetchSessionToken();
-  }, []);
+    if (address) fetchSessionToken();
+  }, [address]);
 
   // Generate the Coinbase Onramp URL using the sessionToken
   const onrampUrl = sessionToken
