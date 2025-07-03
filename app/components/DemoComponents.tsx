@@ -2,7 +2,7 @@
 
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { useAccount, useWalletClient, usePublicClient } from "wagmi";
-import { encodeAbiParameters, parseUnits, type Abi } from "viem";
+import { encodeAbiParameters, parseUnits, type Abi, formatUnits } from "viem";
 import { erc20Abi } from "viem";
 import {
   Transaction,
@@ -293,9 +293,34 @@ export function Home({ setActiveTab }: HomeProps) {
   const [showModal, setShowModal] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [usdcBalance, setUsdcBalance] = useState<bigint>(0n);
+  const [balanceLoading, setBalanceLoading] = useState(false);
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
+
+  // Fetch USDC balance when modal opens or selected membership changes
+  useEffect(() => {
+    async function fetchUSDCBalance() {
+      if (!address || !publicClient) return;
+      setBalanceLoading(true);
+      try {
+        const balance = await publicClient.readContract({
+          address: USDC_ADDRESS,
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [address],
+        });
+        setUsdcBalance(BigInt(balance));
+      } catch {
+        setUsdcBalance(0n);
+      }
+      setBalanceLoading(false);
+    }
+    if (showModal && selected && address && publicClient) {
+      fetchUSDCBalance();
+    }
+  }, [showModal, selected, address, publicClient]);
 
   async function checkAllowance(membership: (typeof MEMBERSHIPS)[0]) {
     if (!address || !membership || !publicClient) return;
@@ -318,6 +343,53 @@ export function Home({ setActiveTab }: HomeProps) {
 
   async function approveUSDC(membership: (typeof MEMBERSHIPS)[0]) {
     if (!walletClient || !membership) return;
+    // Check if the current network is Base (8453)
+    const baseChainIdHex = "0x2105"; // 8453 in hex
+    if (walletClient.chain?.id !== 8453) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: baseChainIdHex }],
+        });
+      } catch (switchError: unknown) {
+        // Check if the error is an object and has a 'code' property
+        if (
+          typeof switchError === "object" &&
+          switchError !== null &&
+          "code" in switchError &&
+          (switchError as { code: number }).code === 4902
+        ) {
+          try {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [
+                {
+                  chainId: baseChainIdHex,
+                  chainName: "Base Mainnet",
+                  rpcUrls: ["https://mainnet.base.org"],
+                  nativeCurrency: {
+                    name: "Ether",
+                    symbol: "ETH",
+                    decimals: 18,
+                  },
+                  blockExplorerUrls: ["https://basescan.org"],
+                },
+              ],
+            });
+          } catch {
+            alert("Please add the Base network to your wallet to continue.");
+            return;
+          }
+        } else {
+          alert(
+            "Please switch to the Base network in your wallet to continue.",
+          );
+          return;
+        }
+      }
+      // After switching, the user must re-try the transaction
+      return;
+    }
     await walletClient.writeContract({
       address: USDC_ADDRESS,
       abi: erc20Abi,
@@ -348,6 +420,11 @@ export function Home({ setActiveTab }: HomeProps) {
     setEmail("");
     setIsApproved(false);
   }
+
+  // Helper to check if user has enough USDC for selected membership
+  const hasEnoughUSDC = selected
+    ? usdcBalance >= parseUnits(selected.price, selected.decimals)
+    : true;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -448,13 +525,33 @@ export function Home({ setActiveTab }: HomeProps) {
                 className="w-full px-3 py-2 border rounded-lg text-[var(--app-foreground)] bg-[var(--app-card-bg)] border-[var(--app-card-border)] focus:outline-none focus:ring-1 focus:ring-[var(--app-accent)]"
               />
             </div>
+            {/* USDC Balance Warning */}
+            {selected && (
+              <div className="mb-2 text-sm">
+                {balanceLoading ? (
+                  <span className="text-[var(--app-foreground-muted)]">
+                    Checking USDC balance...
+                  </span>
+                ) : (
+                  <span>
+                    Your USDC balance:{" "}
+                    {formatUnits(usdcBalance, selected.decimals)} USDC
+                  </span>
+                )}
+                {!hasEnoughUSDC && !balanceLoading && (
+                  <div className="text-red-500 mt-1">
+                    Insufficient USDC balance for this membership.
+                  </div>
+                )}
+              </div>
+            )}
             {!isApproved ? (
               <Button
                 variant="primary"
                 size="md"
                 className="w-full mb-2"
                 onClick={() => approveUSDC(selected)}
-                disabled={checking || !email}
+                disabled={checking || !email || !hasEnoughUSDC}
               >
                 {checking ? "Checking..." : `Approve ${selected.price} USDC`}
               </Button>
@@ -480,7 +577,7 @@ export function Home({ setActiveTab }: HomeProps) {
                   },
                 ]}
               >
-                <TransactionButton />
+                <TransactionButton disabled={!hasEnoughUSDC} />
                 <TransactionStatus />
               </Transaction>
             )}

@@ -42,7 +42,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-background relative overflow-hidden">
+      <body className="bg-background relative">
         {/* Video Background */}
         <video
           autoPlay
