@@ -112,13 +112,12 @@ export function Features({ setActiveTab }: FeaturesProps) {
       name: "Creator",
       icon: "star" as const,
       features: [
-        "Access to exclusive creative workshops and masterclasses",
-        "Portfolio showcase and networking opportunities",
-        "Monthly creative challenges and competitions",
-        "Direct mentorship from industry professionals",
-        "Early access to new tools and resources",
+        "Access to exclusive creative resources and events",
+        "Media exposure opportunities",
+        "Seasonal creative challenges and competitions",
+        "Competitve revenue sharing and earning opportunities",
+        "Access to creative Web3/AI software and tools",
         "Community feedback and collaboration spaces",
-        "Revenue sharing opportunities on platform projects",
       ],
     },
     {
@@ -431,7 +430,16 @@ export function Home({ setActiveTab }: HomeProps) {
     <div className="space-y-6 animate-fade-in">
       <Card title="Creative Memberships">
         <p className="text-[var(--app-foreground-muted)] mb-4">
-          A membership for creative professionals at every level.
+          A membership for{" "}
+          <a
+            href="https://app.creativeplatform.xyz"
+            className="text-[var(--app-accent)] underline hover:text-[var(--app-accent-hover)]"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Creative Platform
+          </a>{" "}
+          at every creative level.
         </p>
         <div className="flex gap-3 flex-wrap">
           <Button

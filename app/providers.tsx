@@ -32,7 +32,7 @@ export function Providers(props: {
           notificationProxyUrl="/api/notification"
         >
           <OnchainKitProvider
-            apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+            apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY as string}
             chain={base}
             projectId={process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_ID}
           >
