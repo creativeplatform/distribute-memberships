@@ -27,6 +27,7 @@ export function Fund({ setActiveTab }: FundProps) {
           }),
         });
         const data = await res.json();
+        console.log("Session token response:", data); // <-- Add this line
         setSessionToken(data.sessionToken);
       } catch {
         setSessionToken(null);
