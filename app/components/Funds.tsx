@@ -27,7 +27,6 @@ export function Fund({ setActiveTab }: FundProps) {
           }),
         });
         const data = await res.json();
-        console.log("Session token response:", data); // <-- Add this line
         setSessionToken(data.sessionToken);
       } catch {
         setSessionToken(null);
@@ -65,11 +64,7 @@ export function Fund({ setActiveTab }: FundProps) {
           >
             Add Funds with Coinbase
           </Button>
-        ) : (
-          <div className="py-8 text-center text-red-500">
-            Unable to load funding widget.
-          </div>
-        )}
+        ) : null}
         <Button
           className="mt-4"
           variant="outline"
