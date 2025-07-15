@@ -430,7 +430,8 @@ export function Home({ setActiveTab }: HomeProps) {
     <div className="space-y-6 animate-fade-in">
       <Card title="Creative Memberships">
         <p className="text-[var(--app-foreground-muted)] mb-4">
-          A membership for{" "}
+          <strong>Creative Memberships</strong> your all-access pass to the
+          cutting-edge Web3 and AI platforms and tools within the{" "}
           <a
             href="https://app.creativeplatform.xyz"
             className="text-[var(--app-accent)] underline hover:text-[var(--app-accent-hover)]"
@@ -439,7 +440,7 @@ export function Home({ setActiveTab }: HomeProps) {
           >
             Creative Platform
           </a>{" "}
-          at every creative level.
+          ecosystem.
         </p>
         <div className="flex gap-3 flex-wrap">
           <Button
