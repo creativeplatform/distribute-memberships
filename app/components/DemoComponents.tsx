@@ -430,7 +430,7 @@ export function Home({ setActiveTab }: HomeProps) {
     <div className="space-y-6 animate-fade-in">
       <Card title="Creative Memberships">
         <p className="text-[var(--app-foreground-muted)] mb-4">
-          <strong>Creative Memberships</strong> your all-access pass to the
+          <strong>Creative Memberships</strong> is your all-access pass to the
           cutting-edge Web3 and AI platforms and tools within the{" "}
           <a
             href="https://app.creativeplatform.xyz"
