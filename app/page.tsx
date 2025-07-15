@@ -102,7 +102,7 @@ export default function App() {
           {activeTab === "fund" && <Fund setActiveTab={setActiveTab} />}
         </main>
 
-        <footer className="mt-2 pt-4 flex justify-center">
+        <footer className="mt-2 pt-4 flex justify-center text-gray-200">
           <Button
             variant="ghost"
             size="sm"
