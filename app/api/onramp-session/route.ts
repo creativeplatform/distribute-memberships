@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { generateJwt } from "@coinbase/cdp-sdk/auth";
 
 // These should be set in your environment variables
 const CDP_API_KEY = process.env.CDP_API_KEY_NAME;
@@ -18,34 +18,9 @@ if (!CDP_PROJECT_ID) {
   );
 }
 
-const CDP_API_KEY_SAFE = CDP_API_KEY as string;
-const CDP_API_SECRET_SAFE = CDP_API_SECRET as string;
-
-function generateJWT() {
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    iss: CDP_API_KEY_SAFE,
-    sub: CDP_API_KEY_SAFE,
-    aud: "coinbase-cloud",
-    iat: now,
-    exp: now + 60 * 5, // 5 minutes
-  };
-
-  // Debug: Log payload structure (remove in production)
-  console.log("JWT payload structure:", {
-    iss: payload.iss?.substring(0, 10) + "...",
-    sub: payload.sub?.substring(0, 10) + "...",
-    aud: payload.aud,
-    iat: payload.iat,
-    exp: payload.exp,
-  });
-
-  return jwt.sign(payload, CDP_API_SECRET_SAFE, { algorithm: "HS256" });
-}
-
+// POST: Generate a session token using the CDP SDK
 export async function POST(request: Request) {
   try {
-    // Parse the request body with enhanced parameter support
     const body = await request.json();
     const {
       address,
@@ -100,11 +75,30 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log("Generating JWT token...");
-    const jwtToken = generateJWT();
-    console.log("JWT token generated successfully");
+    // Generate JWT using the CDP SDK
+    let jwtToken: string;
+    try {
+      jwtToken = await generateJwt({
+        apiKeyId: CDP_API_KEY as string,
+        apiKeySecret: CDP_API_SECRET as string,
+        requestMethod: "POST",
+        requestHost: "api.developer.coinbase.com",
+        requestPath: "/onramp/v1/token",
+        expiresIn: 120,
+      });
+    } catch (jwtError) {
+      console.error("Error generating JWT:", jwtError);
+      return NextResponse.json(
+        {
+          error: "Failed to generate JWT for CDP API authentication.",
+          details:
+            jwtError instanceof Error ? jwtError.message : "Unknown error",
+        },
+        { status: 500 },
+      );
+    }
 
-    // Enhanced request body for session token
+    // Prepare request body for session token
     const requestBody: {
       addresses: Array<{ address: string; blockchains: string[] }>;
       assets: string[];
@@ -123,17 +117,12 @@ export async function POST(request: Request) {
       fiatCurrency,
       defaultPaymentMethod,
     };
-
-    // Add optional parameters if provided
     if (presetFiatAmount) {
       requestBody.presetFiatAmount = presetFiatAmount;
     }
     if (quoteId) {
       requestBody.quoteId = quoteId;
     }
-
-    console.log("Making request to Coinbase API...");
-    console.log("Request body:", JSON.stringify(requestBody, null, 2));
 
     // Call Coinbase Onramp Session Token API
     const response = await fetch(
@@ -148,59 +137,48 @@ export async function POST(request: Request) {
       },
     );
 
-    console.log("Coinbase API response status:", response.status);
-
+    const responseText = await response.text();
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Coinbase API error details:", {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        body: errorText,
-      });
-
-      // Handle specific error cases
+      let errorDetails;
+      try {
+        errorDetails = JSON.parse(responseText);
+      } catch {
+        errorDetails = responseText;
+      }
       if (response.status === 401) {
         return NextResponse.json(
           {
-            error: "Invalid API credentials",
+            error: "Authentication failed",
             details:
-              "Please check your CDP_API_KEY_NAME and CDP_API_KEY_PRIVATE_KEY environment variables",
+              "Please verify your CDP API key and secret are correct. The API key should be in the format: organizations/{org_id}/apiKeys/{key_id}",
+            apiError: errorDetails,
           },
           { status: 401 },
         );
       }
-      if (response.status === 403) {
-        return NextResponse.json(
-          {
-            error: "API access forbidden. Check your API key permissions.",
-            details: "Your API key may not have onramp permissions enabled",
-          },
-          { status: 403 },
-        );
-      }
-      if (response.status === 429) {
-        return NextResponse.json(
-          { error: "Rate limit exceeded. Please try again later." },
-          { status: 429 },
-        );
-      }
-
       return NextResponse.json(
         {
-          error: "Failed to generate session token. Please try again.",
-          details: `API returned ${response.status}: ${response.statusText}`,
-          body: errorText,
+          error: `CDP API error: ${response.status} ${response.statusText}`,
+          details: errorDetails,
+        },
+        { status: response.status },
+      );
+    }
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      return NextResponse.json(
+        {
+          error: "Invalid response from CDP API",
+          details: responseText,
         },
         { status: 500 },
       );
     }
 
-    const data = await response.json();
-    console.log("Coinbase API response data:", data);
-
-    const sessionToken = data?.data?.token;
-
+    const sessionToken = data.token || data.data?.token;
     if (!sessionToken) {
       return NextResponse.json(
         { error: "No session token returned from Coinbase API" },
@@ -208,7 +186,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Return enhanced response with configuration
     return NextResponse.json({
       sessionToken,
       config: {
@@ -220,12 +197,13 @@ export async function POST(request: Request) {
         projectId: CDP_PROJECT_ID,
       },
     });
-  } catch (error) {
-    console.error("Onramp session error:", error);
+  } catch (mainError) {
+    console.error("Onramp session error:", mainError);
     return NextResponse.json(
       {
-        error: "Internal server error. Please try again.",
-        details: error instanceof Error ? error.message : "Unknown error",
+        error: "Failed to generate session token",
+        details:
+          mainError instanceof Error ? mainError.message : "Unknown error",
       },
       { status: 500 },
     );
