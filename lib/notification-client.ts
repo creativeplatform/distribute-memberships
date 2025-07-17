@@ -1,9 +1,13 @@
 import {
-  FrameNotificationDetails,
   type SendNotificationRequest,
   sendNotificationResponseSchema,
 } from "@farcaster/frame-sdk";
 import { getUserNotificationDetails } from "@/lib/notification";
+
+type FrameNotificationDetails = {
+  url: string;
+  token: string;
+};
 
 const appUrl = process.env.NEXT_PUBLIC_URL || "";
 
