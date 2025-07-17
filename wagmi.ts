@@ -16,6 +16,10 @@ export function getConfig() {
       storage: cookieStorage,
     }),
     ssr: true,
+    // Enable auto-connection for better UX in Farcaster
+    multiInjectedProviderDiscovery: false,
+    // Enable automatic reconnection for returning users
+    syncConnectedChain: true,
     transports: {
       [base.id]: http(),
     },

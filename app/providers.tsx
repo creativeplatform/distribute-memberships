@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { base } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MiniKitProvider } from "@coinbase/onchainkit/minikit";
@@ -14,6 +14,16 @@ export function Providers(props: {
 }) {
   const [config] = useState(() => getConfig());
   const [queryClient] = useState(() => new QueryClient());
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Don't render until we're on the client side to avoid hydration issues
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <WagmiProvider config={config} initialState={props.initialState}>

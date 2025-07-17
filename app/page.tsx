@@ -24,20 +24,33 @@ import { Icon } from "./components/DemoComponents";
 import { Home } from "./components/DemoComponents";
 import { Features } from "./components/DemoComponents";
 import { Fund } from "./components/Funds";
+import { handleSplashScreen } from "./utils/farcaster";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const [frameAdded, setFrameAdded] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
+  const [frameInitialized, setFrameInitialized] = useState(false);
 
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
 
   useEffect(() => {
-    if (!isFrameReady) {
-      setFrameReady();
+    async function initializeFrame() {
+      if (!frameInitialized) {
+        // Initialize Farcaster Frame SDK first
+        await handleSplashScreen({ delay: 50 });
+        setFrameInitialized(true);
+
+        // Then set MiniKit frame ready
+        if (!isFrameReady) {
+          setFrameReady();
+        }
+      }
     }
-  }, [setFrameReady, isFrameReady]);
+
+    initializeFrame();
+  }, [setFrameReady, isFrameReady, frameInitialized]);
 
   const handleAddFrame = useCallback(async () => {
     const frameAdded = await addFrame();
