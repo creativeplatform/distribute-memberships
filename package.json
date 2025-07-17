@@ -11,7 +11,7 @@
   "dependencies": {
     "@coinbase/cdp-sdk": "^1.26.0",
     "@coinbase/onchainkit": "latest",
-    "@farcaster/frame-sdk": "^0.0.64",
+    "@farcaster/frame-sdk": "^0.0.35",
     "@tanstack/react-query": "^5",
     "@unlock-protocol/paywall": "^0.8.1",
     "@upstash/redis": "^1.34.4",
@@ -37,8 +37,5 @@
     "prettier": "^3.5.3",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
-  },
-  "overrides": {
-    "@farcaster/frame-sdk": "^0.0.64"
   }
 }
